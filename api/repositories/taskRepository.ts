@@ -17,19 +17,32 @@ export class TaskRepository {
     return query.exec();
   }
 
-  static newTask(task: TaskRequest) {
+  static async newTask(task: TaskRequest) {
     const responsibleId = new Types.ObjectId(task.responsible);
-    return Task.create({
+
+    const dueDate = new Date(task.dueDate);
+    if (isNaN(dueDate.getTime())) {
+      throw new Error('Invalid dueDate format');
+    }
+
+    const newTask = await Task.create({
       ...task,
       responsible: responsibleId,
+      dueDate,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+
+    return newTask;
   }
 
   static updateTask(taskId: string, task: TaskUpdateRequest) {
     const id = new Types.ObjectId(taskId);
-    return Task.findByIdAndUpdate(id, { ...task, updatedAt: new Date() });
+    return Task.findByIdAndUpdate(
+      id,
+      { ...task, updatedAt: new Date() },
+      { new: true }
+    );
   }
 
   static deleteTask(taskId: string) {

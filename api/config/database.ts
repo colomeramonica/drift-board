@@ -3,17 +3,20 @@ import dotenv from 'dotenv';
 
 dotenv.config({ path: './.env' });
 
-if (!process.env.MONGO_URI) {
-  throw new Error('MONGO_URI is not defined in the environment variables');
-}
+const dbName =
+  process.env.NODE_ENV === 'test' ? 'drift_board_test' : 'drift_board';
+const dbUri = `mongodb://localhost:27017/${dbName}`;
 
-mongoose.connect(process.env.MONGO_URI);
+mongoose.connect(dbUri);
 
 const db = mongoose.connection;
 
-db.on('error', console.error.bind(console, 'Erro de conexão:'));
-db.once('open', () => {
-  console.log('Conectado ao MongoDB');
+db.on('connected', () => {
+  console.log(`✅ Connected to MongoDB database: ${dbName}`);
+});
+
+db.on('error', (error) => {
+  console.error('❌ MongoDB connection error:', error);
 });
 
 export default db;

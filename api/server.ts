@@ -32,19 +32,11 @@ app.register(fastifySwaggerUi, { routePrefix: '/docs' });
 app.register(fastifyCors, { origin: '*' });
 
 app.setErrorHandler((error, _, reply) => {
-  if (error instanceof BadRequestError) {
-    reply.code(error.statusCode).send({
-      statusCode: error.statusCode,
-      error: error.message,
-      issues: error.issues,
-    });
-  } else {
-    reply.code(500).send({
-      statusCode: 500,
-      error: 'Internal Server Error',
-      message: error.message,
-    });
-  }
+  return reply.code(400).send({
+    statusCode: error.statusCode,
+    message: 'Bad Request',
+    error: error.message,
+  });
 });
 
 // Registro de rotas
@@ -52,14 +44,18 @@ app.register(tasksRoutes);
 app.register(membersRoutes);
 
 // Conexão com MongoDB
-db.once('open', async () => {
-  console.log('✅ MongoDB connection established');
-  app.listen({ port: 3333 }, (err) => {
-    if (err) throw err;
-    console.log('🚀 Server running');
+if (process.env.NODE_ENV !== 'test') {
+  db.once('open', async () => {
+    console.log('✅ MongoDB connection established');
+    app.listen({ port: 3333 }, (err) => {
+      if (err) throw err;
+      console.log('🚀 Server running');
+    });
   });
-});
+}
 
 db.on('error', (error) => {
   console.error('❌ MongoDB connection error:', error);
 });
+
+export { app };

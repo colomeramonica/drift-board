@@ -1,6 +1,6 @@
 import { TaskController } from '../../../controllers/taskController';
 import { BadRequestError } from '../../../errors';
-import { TaskSchema } from '../../../schemas/zod/task';
+import { TaskListSchema, TaskSchema } from '../../../schemas/zod/task';
 import { FastifyTypedInstance } from '../../../types';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
@@ -13,18 +13,29 @@ export async function create(app: FastifyTypedInstance) {
         description: 'Creates a task',
         body: zodToJsonSchema(TaskSchema),
         response: {
-          201: zodToJsonSchema(TaskSchema),
+          200: {
+            type: 'array',
+            items: zodToJsonSchema(TaskListSchema),
+          },
         },
       },
     },
     async (request, reply) => {
       const validation = TaskSchema.safeParse(request.body);
-
       if (!validation.success) {
-        throw new BadRequestError('Request error', validation.error.errors);
+        return reply.status(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: 'Validation error',
+          issues: validation.error.errors,
+        });
       }
+
       const task = await TaskController.createTask(validation.data);
-      return reply.status(201).send(task);
+
+      return reply
+        .status(201)
+        .send({ message: 'Task created successfully!', data: task });
     }
   );
 }

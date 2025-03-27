@@ -26,30 +26,44 @@ export async function update(app: FastifyTypedInstance) {
             task: zodToJsonSchema(TaskListSchema),
           },
         },
+        400: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number' },
+            error: { type: 'string' },
+            message: { type: 'string' },
+            issues: { type: 'array', items: { type: 'object' } },
+          },
+        },
+        404: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number' },
+            error: { type: 'string' },
+            message: { type: 'string' },
+          },
+        },
       },
     },
     handler: async (request, reply) => {
       const { taskId } = request.params as { taskId: string };
 
-      if (!taskId) {
-        console.error('Task ID is missing in request params');
-        throw new BadRequestError('Task ID is required', []);
-      }
-
       const validation = UpdateTaskSchema.safeParse(request.body);
 
       if (!validation.success) {
-        throw new BadRequestError('Request error', validation.error.errors);
+        return reply.status(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: 'Validation error',
+          issues: validation.error.errors,
+        });
       }
 
       const task = await TaskController.updateTask(taskId, validation.data);
 
-      if (!task) {
-        console.error('Task not found for ID:', taskId);
-        throw new BadRequestError('Task not found', []);
-      }
-
-      return reply.status(200).send({ message: 'Task updated', task });
+      return reply
+        .status(200)
+        .send({ message: 'Task updated successfully!', task });
     },
   });
 }

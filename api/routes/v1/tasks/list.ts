@@ -44,14 +44,15 @@ export async function list(app: FastifyTypedInstance) {
           .optional(),
       });
 
-      const parsedQuery = querySchema.safeParse(request.query);
+      const validation = querySchema.safeParse(request.query);
 
-      if (!parsedQuery.success) {
-        console.error('Validation errors:', parsedQuery.error.errors); // Log de erro
-        throw new BadRequestError(
-          'Query validation error',
-          parsedQuery.error.errors
-        );
+      if (!validation.success) {
+        return reply.status(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: 'Validation error',
+          issues: validation.error.errors,
+        });
       }
 
       const filters: TaskFilter = {

@@ -5,7 +5,7 @@ export const TaskSchema = new Schema({
   description: String,
   dueDate: { type: Date, required: true },
   completedAt: Date,
-  priority: { type: Number, enum: [1, 2, 3], default: 2 },
+  priority: { type: Number, enum: [1, 2, 3], default: 1 },
   status: {
     type: String,
     enum: ['Open', 'Ready to Dev', 'In Progress', 'Completed'],
