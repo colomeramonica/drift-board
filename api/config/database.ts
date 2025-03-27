@@ -1,8 +1,13 @@
 import mongoose from 'mongoose';
+import dotenv from 'dotenv';
 
-const DB_CONNECTION_STRING = 'mongodb://127.0.0.1:27017/drift-board';
+dotenv.config({ path: './.env' });
 
-mongoose.connect(DB_CONNECTION_STRING);
+if (!process.env.MONGO_URI) {
+  throw new Error('MONGO_URI is not defined in the environment variables');
+}
+
+mongoose.connect(process.env.MONGO_URI);
 
 const db = mongoose.connection;
 

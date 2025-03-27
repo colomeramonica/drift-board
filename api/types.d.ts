@@ -15,18 +15,30 @@ export type FastifyTypedInstance = FastifyInstance<
   ZodTypeProvider
 >;
 
-export type UserInterface = {
-  id: string;
-  name: string;
-  email: string;
-};
-
-export type TasksInterface = {
-  id: string;
+export type TaskRequest = {
+  _id: string;
   title: string;
   description: string;
-  due_date: date;
-  assignee: User;
-  priority: enum;
-  status: enum;
+  dueDate: Date;
+  priority: number;
+  status: 'Open' | 'Ready to Dev' | 'In Progress' | 'Completed';
+  responsible: string;
+};
+
+export type TaskFilter = {
+  status?: 'Open' | 'Ready to Dev' | 'In Progress' | 'Completed';
+  priority?: number;
+};
+
+export type MemberRequest = {
+  name: string;
+  email: string;
+  avatar?: string;
+};
+
+export type TaskUpdateRequest = {
+  status?: 'Open' | 'Ready to Dev' | 'In Progress' | 'Completed';
+  responsible?: string;
+  dueDate?: Date;
+  priority?: number;
 };

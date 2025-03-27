@@ -76,7 +76,7 @@ export async function routes(app: FastifyTypedInstance) {
             status: z.enum(['Open', 'In Progress', 'Completed']),
             priority: z.enum(['Low', 'Medium', 'High']),
             assignee: z.string().nullable(),
-            due_date: z.string().nullable(),
+            due_date: z.string().nullable(), // Validar formato de data
           })
         ),
       },
@@ -111,7 +111,10 @@ export async function routes(app: FastifyTypedInstance) {
           status: z.enum(['Open', 'In Progress', 'Completed']),
           priority: z.enum(['Low', 'Medium', 'High']),
           assignee: z.string().nullable(),
-          due_date: z.string().nullable(),
+          due_date: z
+            .string()
+            .regex(/^\d{4}-\d{2}-\d{2}$/)
+            .nullable(), // Validar formato de data
         }),
         404: z.object({
           message: z.string().describe('Task not found'),
@@ -145,7 +148,7 @@ export async function routes(app: FastifyTypedInstance) {
         title: z.string(),
         description: z.string(),
         assignee: z.string(),
-        due_date: z.string(),
+        due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // Validar formato de data
         status: z.enum(['Open', 'In Progress', 'Completed']),
         priority: z.enum(['Low', 'Medium', 'High']),
       }),

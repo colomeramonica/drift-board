@@ -2,7 +2,7 @@ export interface TaskProps {
   id: string;
   title: string;
   description: string;
-  assignee: string;
+  responsible: string;
   status: string;
   priority: string;
   due_date: string;

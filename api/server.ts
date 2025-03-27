@@ -1,42 +1,62 @@
 import { fastify } from 'fastify';
 import { fastifyCors } from '@fastify/cors';
-import {
-  validatorCompiler,
-  serializerCompiler,
-  jsonSchemaTransform,
-} from 'fastify-type-provider-zod';
-import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { fastifySwagger } from '@fastify/swagger';
 import { fastifySwaggerUi } from '@fastify/swagger-ui';
-import { routes } from './routes';
-import db from './app';
+import BadRequestError from './errors/BadRequestError';
+import { zodToJsonSchema } from 'zod-to-json-schema';
+import { TaskSchema } from './schemas/zod/task';
+import { TeamMemberSchema } from './schemas/zod/team-member';
+import db from './config/database';
+import { tasksRoutes } from './routes/v1/tasks';
+import { membersRoutes } from './routes/v1/team-member';
 
-const app = fastify().withTypeProvider<ZodTypeProvider>();
+const app = fastify();
 
-app.setValidatorCompiler(validatorCompiler);
-app.setSerializerCompiler(serializerCompiler);
-
-app.register(fastifyCors, { origin: '*' });
+// Configuração do Swagger
 app.register(fastifySwagger, {
   openapi: {
     info: {
       title: 'Drift Board - Tasks API',
       version: '1.0.0',
     },
+    components: {
+      schemas: {
+        Task: zodToJsonSchema(TaskSchema),
+        TeamMember: zodToJsonSchema(TeamMemberSchema),
+      },
+    },
   },
-  transform: jsonSchemaTransform,
-});
-app.register(fastifySwaggerUi, {
-  routePrefix: '/docs',
 });
 
+app.register(fastifySwaggerUi, { routePrefix: '/docs' });
+app.register(fastifyCors, { origin: '*' });
+
+app.setErrorHandler((error, _, reply) => {
+  if (error instanceof BadRequestError) {
+    reply.code(error.statusCode).send({
+      statusCode: error.statusCode,
+      error: error.message,
+      issues: error.issues,
+    });
+  } else {
+    reply.code(500).send({
+      statusCode: 500,
+      error: 'Internal Server Error',
+      message: error.message,
+    });
+  }
+});
+
+// Registro de rotas
+app.register(tasksRoutes);
+app.register(membersRoutes);
+
+// Conexão com MongoDB
 db.once('open', async () => {
   console.log('✅ MongoDB connection established');
-
-  app.register(routes);
-
-  app.listen({ port: 3333 }).then(() => {
-    console.log('HTTP server running on port 3333 🌿');
+  app.listen({ port: 3333 }, (err) => {
+    if (err) throw err;
+    console.log('🚀 Server running');
   });
 });
 

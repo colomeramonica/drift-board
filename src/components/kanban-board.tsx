@@ -1,4 +1,4 @@
-import { DndContext } from '@dnd-kit/core';
+import React from 'react';
 import TaskColumn from './task-column';
 import { useState } from 'react';
 
@@ -13,7 +13,7 @@ export default function KanbanBoard() {
             id: '1',
             title: 'Task 1',
             description: 'Description 1',
-            assignee: 'User 1',
+            responsible: 'User 1',
             status: 'Open',
             priority: 'Low',
             due_date: '2025-04-01',
@@ -22,7 +22,7 @@ export default function KanbanBoard() {
             id: '2',
             title: 'Task 2',
             description: 'Description 2',
-            assignee: 'User 2',
+            responsible: 'User 2',
             status: 'Open',
             priority: 'Low',
             due_date: '2025-04-01',
@@ -37,7 +37,7 @@ export default function KanbanBoard() {
             id: '3',
             title: 'Task 1',
             description: 'Description 1',
-            assignee: 'User 1',
+            responsible: 'User 1',
             status: 'Ready for development',
             priority: 'Low',
             due_date: '2025-03-22',
@@ -46,7 +46,7 @@ export default function KanbanBoard() {
             id: '4',
             title: 'Task 2',
             description: 'Description 2',
-            assignee: 'User 2',
+            responsible: 'User 2',
             status: 'Ready for development',
             priority: 'High',
             due_date: '2025-03-19',
@@ -61,7 +61,7 @@ export default function KanbanBoard() {
             id: '5',
             title: 'Task 3',
             description: 'Description 3',
-            assignee: 'User 3',
+            responsible: 'User 3',
             status: 'In Progress',
             priority: 'Medium',
             due_date: '2025-03-21',
@@ -76,7 +76,7 @@ export default function KanbanBoard() {
             id: '6',
             title: 'Task 4',
             description: 'Description 4',
-            assignee: 'User 4',
+            responsible: 'User 4',
             status: 'Completed',
             priority: 'High',
             due_date: '2025-03-14',
@@ -86,64 +86,16 @@ export default function KanbanBoard() {
     ],
   });
 
-  const handleDragEnd = (event) => {
-    const { active, over } = event;
-    if (!over) return;
-
-    const sourceColumnIndex = board.columns.findIndex((column) =>
-      column.tasks.some((task) => task.id === active.id)
-    );
-    const targetColumnIndex = board.columns.findIndex(
-      (column) => column.id.toString() === over.id
-    );
-
-    if (
-      sourceColumnIndex !== -1 &&
-      targetColumnIndex !== -1 &&
-      sourceColumnIndex !== targetColumnIndex
-    ) {
-      const sourceColumn = board.columns[sourceColumnIndex];
-      const targetColumn = board.columns[targetColumnIndex];
-      const taskToMove = sourceColumn.tasks.find(
-        (task) => task.id === active.id
-      );
-
-      if (!taskToMove) return;
-
-      setBoard((prevBoard) => {
-        const newSourceColumn = {
-          ...sourceColumn,
-          tasks: sourceColumn.tasks.filter((task) => task.id !== active.id),
-        };
-        const newTargetColumn = {
-          ...targetColumn,
-          tasks: [...targetColumn.tasks, ...(taskToMove ? [taskToMove] : [])],
-        };
-
-        const newColumns = [...prevBoard.columns];
-        newColumns[sourceColumnIndex] = newSourceColumn;
-        newColumns[targetColumnIndex] = newTargetColumn;
-
-        return {
-          ...prevBoard,
-          columns: newColumns,
-        };
-      });
-    }
-  };
-
   return (
-    <DndContext onDragEnd={handleDragEnd}>
-      <div className="flex flex-row gap-2 min-h-screen h-full justify-between">
-        {board.columns.map((column) => (
-          <TaskColumn
-            key={column.id}
-            id={column.id.toString()}
-            title={column.title}
-            tasks={column.tasks}
-          />
-        ))}
-      </div>
-    </DndContext>
+    <div className="flex lg:flex-row flex-col gap-2 justify-between">
+      {board.columns.map((column) => (
+        <TaskColumn
+          key={column.id}
+          id={column.id.toString()}
+          title={column.title}
+          tasks={column.tasks}
+        />
+      ))}
+    </div>
   );
 }
