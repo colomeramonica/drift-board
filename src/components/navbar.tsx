@@ -1,7 +1,16 @@
 import React from 'react';
 import Wave from '@/assets/wave';
-import { Drawer, DrawerContent, DrawerTrigger } from './ui/drawer';
 import { Button } from './ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from './ui/dialog';
+import NewTaskModal from './new-task-modal';
 
 export default function NavBar() {
   return (
@@ -11,16 +20,12 @@ export default function NavBar() {
           <Wave stroke="white" width="48px" height="48px" />
           Drift Board
         </h1>
-        <Drawer>
-          <DrawerTrigger>
-            <Button variant="default">Create Task</Button>
-          </DrawerTrigger>
-          <DrawerContent>
-            <div className="flex flex-col">
-              <div className="flex p-4 pb-0 justify-center"></div>
-            </div>
-          </DrawerContent>
-        </Drawer>
+        <Dialog>
+          <DialogTrigger>
+            <Button variant="default" className="cursor-pointer">Create Task</Button>
+          </DialogTrigger>
+          <NewTaskModal />
+        </Dialog>
       </nav>
     </section>
   );

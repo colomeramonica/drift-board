@@ -13,11 +13,11 @@ import { FlagIcon } from 'lucide-react';
 import { Separator } from './ui/separator';
 
 export default function IssueCard({ issue }: { issue: TaskProps }) {
-  const getRemainingDays = (dueDate: string) => {
+  const getRemainingDays = (dueDate: string): number => {
     const due = new Date(dueDate);
     const now = new Date();
-    const diff = due.getTime() - now.getTime();
-    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+    const diffTime = due.getTime() - now.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
   return (
@@ -30,18 +30,22 @@ export default function IssueCard({ issue }: { issue: TaskProps }) {
           <Badge
             variant="default"
             className={
-              issue.priority === 'High'
+              issue.priority === 3
                 ? 'bg-red-500 text-white'
-                : issue.priority === 'Medium'
+                : issue.priority === 2
                 ? 'bg-yellow-500 text-white'
                 : 'bg-blue-500 text-white'
             }
           >
             <FlagIcon size={16} />
-            {issue.priority}
+            {issue.priority === 3
+              ? 'High'
+              : issue.priority === 2
+              ? 'Medium'
+              : 'Low'}
           </Badge>
         </div>
-        <CardTitle className="text-gray-300 flex justify-start">
+        <CardTitle className="text-gray-300 flex justify-start py-3">
           {issue.title}
         </CardTitle>
       </CardHeader>
@@ -52,20 +56,24 @@ export default function IssueCard({ issue }: { issue: TaskProps }) {
         <Separator />
         <div className="flex flex-row justify-between items-center mt-2">
           <Avatar>
-            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-            <AvatarFallback>CN</AvatarFallback>
+            <AvatarImage src={issue.responsible.avatar} alt="avatar" />
+            <AvatarFallback>
+              {issue.responsible.name.slice(0, 2).toUpperCase()}
+            </AvatarFallback>
           </Avatar>
           <Badge
             variant="default"
             className={
-              getRemainingDays(issue.due_date) > 0
+              getRemainingDays(issue.dueDate) > 0
                 ? 'bg-green-300 text-green-700'
                 : 'bg-red-300 text-red-700'
             }
           >
-            {getRemainingDays(issue.due_date) > 0
-              ? `${getRemainingDays(issue.due_date)} days left`
-              : `Late for ${Math.abs(getRemainingDays(issue.due_date))} days`}
+            {isNaN(getRemainingDays(issue.dueDate))
+              ? 'Invalid due date'
+              : getRemainingDays(issue.dueDate) > 0
+              ? `${getRemainingDays(issue.dueDate)} days left`
+              : `Late for ${Math.abs(getRemainingDays(issue.dueDate))} days`}
           </Badge>
         </div>
       </CardContent>
