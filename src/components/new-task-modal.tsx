@@ -28,7 +28,7 @@ import { MembersProps } from '../types';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { MultiSelect } from './ui/multi-select';
 
-export default function NewTaskModal() {
+export default function NewTaskModal({ onClose }: { onClose: () => void }) {
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -40,6 +40,8 @@ export default function NewTaskModal() {
   });
   const [members, setMembers] = useState<MembersProps[]>([]);
   const [tags, setTags] = useState<string[]>(['development']);
+  const [loading, setLoading] = useState(false);
+  const [response, setResponse] = useState('');
 
   const tagsList = [
     { value: 'development', label: 'Development' },
@@ -59,7 +61,6 @@ export default function NewTaskModal() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     name: string
   ) => {
-    console.log(e, name);
     setNewTask((prev) => ({
       ...prev,
       [name]: e.target.value,
@@ -68,13 +69,37 @@ export default function NewTaskModal() {
 
   const handleSubmit = async () => {
     const task = { ...newTask, tags };
-    await createTask(task);
+    setLoading(true);
+    setResponse('');
+    try {
+      const response = await createTask(task);
+      setResponse(response?.message || 'Task created successfully!');
+      if (!response?.error) {
+        setTimeout(() => {
+          onClose();
+        }, 1000);
+      }
+    } catch (error) {
+      setResponse('Failed to create task. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <DialogContent className="sm:max-w-lg">
       <DialogHeader>
         <DialogTitle className="text-blue-950">New task</DialogTitle>
+        {response && (
+          <div
+            className={cn(
+              'text-sm',
+              response.includes('Failed') ? 'text-red-500' : 'text-green-500'
+            )}
+          >
+            {response}
+          </div>
+        )}
       </DialogHeader>
       <div className="flex flex-col gap-4 py-4">
         <div className="md:grid md:grid-cols-4 flex flex-col items-start md:items-center gap-2">
@@ -102,12 +127,16 @@ export default function NewTaskModal() {
           <Label htmlFor="priority" className="text-right text-blue-900">
             Priority
           </Label>
-          <Select>
+          <Select
+            onValueChange={(value) =>
+              setNewTask((prev) => ({ ...prev, priority: value }))
+            }
+          >
             <SelectTrigger className="md:col-span-3 w-auto text-gray-600">
               <SelectValue placeholder="Priority" className="text-gray-600" />
             </SelectTrigger>
             <SelectContent>
-              <SelectGroup onChange={(e) => handleChange(e, 'priority')}>
+              <SelectGroup>
                 <SelectItem value="1" className="text-gray-600">
                   Low
                 </SelectItem>
@@ -125,7 +154,11 @@ export default function NewTaskModal() {
           <Label htmlFor="responsible" className="text-right text-blue-900">
             Responsible
           </Label>
-          <Select>
+          <Select
+            onValueChange={(value) =>
+              setNewTask((prev) => ({ ...prev, responsible: value }))
+            }
+          >
             <SelectTrigger className="md:col-span-3 w-auto text-gray-600">
               <SelectValue
                 placeholder="Responsible"
@@ -133,9 +166,13 @@ export default function NewTaskModal() {
               />
             </SelectTrigger>
             <SelectContent>
-              <SelectGroup onChange={(e) => handleChange(e, 'responsible')}>
+              <SelectGroup>
                 {members.map((member) => (
-                  <SelectItem value={member.name} className="text-gray-600">
+                  <SelectItem
+                    key={member._id}
+                    value={member._id}
+                    className="text-gray-600"
+                  >
                     <Avatar className="mr-2">
                       <AvatarImage src={member.avatar} alt={member.name} />
                       <AvatarFallback>{member.name[0]}</AvatarFallback>
@@ -198,8 +235,11 @@ export default function NewTaskModal() {
       <DialogFooter>
         <Button
           type="submit"
-          className="bg-blue-950 cursor-pointer"
+          className={`bg-blue-950 ${
+            loading ? 'cursor-progress' : 'cursor-pointer'
+          }`}
           onClick={handleSubmit}
+          disabled={loading}
         >
           Create
         </Button>

@@ -1,18 +1,17 @@
 import React from 'react';
 import Wave from '@/assets/wave';
 import { Button } from './ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from './ui/dialog';
+import { Dialog, DialogTrigger } from './ui/dialog';
 import NewTaskModal from './new-task-modal';
+import KanbanBoard from './kanban-board';
 
 export default function NavBar() {
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+
+  const handleTaskCreated = () => {
+    setIsDialogOpen(false);
+  };
+
   return (
     <section>
       <nav className="rounded-sm bg-slate-800 p-2 gap-3 min-w-full flex justify-between shadow-md mb-4">
@@ -20,11 +19,13 @@ export default function NavBar() {
           <Wave stroke="white" width="48px" height="48px" />
           Drift Board
         </h1>
-        <Dialog>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger>
-            <Button variant="default" className="cursor-pointer">Create Task</Button>
+            <Button variant="default" className="cursor-pointer">
+              Create Task
+            </Button>
           </DialogTrigger>
-          <NewTaskModal />
+          <NewTaskModal onClose={handleTaskCreated} />
         </Dialog>
       </nav>
     </section>

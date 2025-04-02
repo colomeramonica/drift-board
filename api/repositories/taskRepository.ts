@@ -14,6 +14,10 @@ export class TaskRepository {
       query.where('priority', filters.priority);
     }
 
+    if (filters.tags) {
+      query.where('tags', filters.tags);
+    }
+
     return query.exec();
   }
 
@@ -48,5 +52,9 @@ export class TaskRepository {
   static deleteTask(taskId: string) {
     const id = new Types.ObjectId(taskId);
     return Task.findByIdAndDelete(id);
+  }
+
+  static deleteAllTasks() {
+    return Task.deleteMany({});
   }
 }

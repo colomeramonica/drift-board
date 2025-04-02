@@ -17,4 +17,8 @@ export class TaskController {
   static async deleteTask(taskId: string) {
     return await TaskRepository.deleteTask(taskId);
   }
+
+  static async deleteAllTasks() {
+    return await TaskRepository.deleteAllTasks();
+  }
 }

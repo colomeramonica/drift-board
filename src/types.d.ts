@@ -8,3 +8,10 @@ export interface TaskProps {
   due_date: string;
   tags: string[];
 }
+
+export interface MembersProps {
+  _id: string;
+  name: string;
+  email: string;
+  avatar: string;
+}

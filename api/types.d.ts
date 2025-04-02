@@ -28,6 +28,7 @@ export type TaskRequest = {
 export type TaskFilter = {
   status?: 'Open' | 'Ready to Dev' | 'In Progress' | 'Completed';
   priority?: number;
+  tags?: string[];
 };
 
 export type MemberRequest = {

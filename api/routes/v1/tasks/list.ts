@@ -38,10 +38,7 @@ export async function list(app: FastifyTypedInstance) {
         priority: z
           .union([z.literal(1), z.literal(2), z.literal(3)])
           .optional(),
-        dueDate: z
-          .string()
-          .regex(/^\d{4}-\d{2}-\d{2}$/)
-          .optional(),
+        tags: z.array(z.string()).optional(),
       });
 
       const validation = querySchema.safeParse(request.query);
@@ -56,9 +53,9 @@ export async function list(app: FastifyTypedInstance) {
       }
 
       const filters: TaskFilter = {
-        status: parsedQuery.data.status,
-        priority: parsedQuery.data.priority,
-        due_date: parsedQuery.data.dueDate,
+        status: validation.data.status,
+        priority: validation.data.priority,
+        tags: validation.data.tags,
       };
 
       const tasks = await TaskController.listTasks(filters);

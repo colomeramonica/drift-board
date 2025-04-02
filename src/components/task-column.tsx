@@ -1,6 +1,7 @@
 import React from 'react';
 import IssueCard from './issue-card';
 import type { TaskProps } from '@/types';
+import EmptyCard from './empty-card';
 
 export default function TaskColumn({
   id,
@@ -14,9 +15,11 @@ export default function TaskColumn({
   return (
     <div className="bg-slate-800 p-3 h-full w-full items-center rounded-sm shadow-lg transition-transform transform backdrop-filter backdrop-blur-lg bg-opacity-30">
       <h2 className="text-white text-lg font-semibold mb-4">{title}</h2>
-      {tasks?.map((task: TaskProps) => (
-        <IssueCard key={task.id} issue={task} />
-      ))}
+      {tasks.length > 0 ? (
+        tasks.map((task: TaskProps) => <IssueCard key={task.id} issue={task} />)
+      ) : (
+        <EmptyCard />
+      )}
     </div>
   );
 }
