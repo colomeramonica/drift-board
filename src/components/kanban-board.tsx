@@ -1,27 +1,30 @@
 import React, { useEffect, useState } from 'react';
-import TaskColumn from './task-column';
+import { useSelector, useDispatch } from 'react-redux';
+import { setTasks } from '../store/reducers/tasksReducer';
 import { getTasks } from '../api';
+import TaskColumn from './task-column';
 import { TaskProps } from '../types';
 
 const COLUMN_NAMES = {
-  Open: 'Unrefined',
-  'Ready to Dev': 'Ready to Do',
+  Open: 'Open',
+  'Ready to Dev': 'Ready to Dev',
   'In Progress': 'In Progress',
-  Completed: 'Done',
+  Completed: 'Completed',
 };
 
 export default function KanbanBoard() {
-  const [tasks, setTasks] = useState<TaskProps[]>([]);
+  const tasks = useSelector((state: any) => state.tasks.tasks);
+  const dispatch = useDispatch();
   const [board, setBoard] = useState<Record<string, TaskProps[]>>({});
 
   useEffect(() => {
     const fetchData = async () => {
       const response = await getTasks();
-      setTasks(response as TaskProps[]);
+      dispatch(setTasks(response as TaskProps[]));
     };
 
     fetchData();
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     const groupedTasks = Object.keys(COLUMN_NAMES).reduce((acc, status) => {
