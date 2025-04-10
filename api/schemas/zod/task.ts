@@ -8,6 +8,7 @@ export const TaskSchema = z.object({
   }),
   priority: z.union([z.literal(1), z.literal(2), z.literal(3)]).default(1),
   status: z.enum(['Open', 'Ready to Dev', 'In Progress', 'Completed']),
+  tags: z.array(z.string()).optional(),
   responsible: z.string(),
 });
 
@@ -20,6 +21,7 @@ export const TaskListSchema = z.object({
   status: z
     .enum(['Open', 'Ready to Dev', 'In Progress', 'Completed'])
     .optional(),
+  tags: z.array(z.string()).optional(),
   responsible: z
     .object({
       id: z.string().optional(),
@@ -36,6 +38,7 @@ export const UpdateTaskSchema = z.object({
     .enum(['Open', 'Ready to Dev', 'In Progress', 'Completed'])
     .optional(),
   priority: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
+  tags: z.array(z.string()).optional(),
   responsible: z.string().optional(),
   dueDate: z.date().optional(),
 });

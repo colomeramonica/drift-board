@@ -1,101 +1,107 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { setTasks, updateTask } from '../store/reducers/tasksReducer';
+import { getTasks } from '../api';
 import TaskColumn from './task-column';
-import { useState } from 'react';
+import { TaskProps } from '../types';
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  closestCenter,
+} from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
+
+const COLUMN_NAMES = {
+  Open: { title: 'Open', id: 'column-open' },
+  'Ready to Dev': { title: 'Ready to Dev', id: 'column-ready-to-dev' },
+  'In Progress': { title: 'In Progress', id: 'column-in-progress' },
+  Completed: { title: 'Completed', id: 'column-completed' },
+};
 
 export default function KanbanBoard() {
-  const [board, setBoard] = useState({
-    columns: [
-      {
-        id: 1,
-        title: 'Backlog',
-        tasks: [
-          {
-            id: '1',
-            title: 'Task 1',
-            description: 'Description 1',
-            responsible: 'User 1',
-            status: 'Open',
-            priority: 'Low',
-            due_date: '2025-04-01',
-          },
-          {
-            id: '2',
-            title: 'Task 2',
-            description: 'Description 2',
-            responsible: 'User 2',
-            status: 'Open',
-            priority: 'Low',
-            due_date: '2025-04-01',
-          },
-        ],
-      },
-      {
-        id: 2,
-        title: 'ToDo',
-        tasks: [
-          {
-            id: '3',
-            title: 'Task 1',
-            description: 'Description 1',
-            responsible: 'User 1',
-            status: 'Ready for development',
-            priority: 'Low',
-            due_date: '2025-03-22',
-          },
-          {
-            id: '4',
-            title: 'Task 2',
-            description: 'Description 2',
-            responsible: 'User 2',
-            status: 'Ready for development',
-            priority: 'High',
-            due_date: '2025-03-19',
-          },
-        ],
-      },
-      {
-        id: 3,
-        title: 'Doing',
-        tasks: [
-          {
-            id: '5',
-            title: 'Task 3',
-            description: 'Description 3',
-            responsible: 'User 3',
-            status: 'In Progress',
-            priority: 'Medium',
-            due_date: '2025-03-21',
-          },
-        ],
-      },
-      {
-        id: 4,
-        title: 'Done',
-        tasks: [
-          {
-            id: '6',
-            title: 'Task 4',
-            description: 'Description 4',
-            responsible: 'User 4',
-            status: 'Completed',
-            priority: 'High',
-            due_date: '2025-03-14',
-          },
-        ],
-      },
-    ],
-  });
+  const tasks = useSelector((state: any) => state.tasks.tasks);
+  const dispatch = useDispatch();
+  const [board, setBoard] = useState<Record<string, TaskProps[]>>({});
+  const [activeTask, setActiveTask] = useState<TaskProps | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await getTasks();
+      dispatch(setTasks(response as TaskProps[]));
+    };
+
+    fetchData();
+  }, [dispatch]);
+
+  useEffect(() => {
+    const groupedTasks = Object.keys(COLUMN_NAMES).reduce((acc, status) => {
+      acc[status] = tasks.filter((task) => task.status === status);
+      return acc;
+    }, {} as Record<string, TaskProps[]>);
+
+    setBoard(groupedTasks);
+  }, [tasks]);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const sourceColumn = active.data.current?.column;
+      const targetColumn = over.id;
+
+      if (sourceColumn && targetColumn) {
+        const sourceTasks = board[sourceColumn];
+        const targetTasks = board[targetColumn];
+        const taskIndex = sourceTasks.findIndex(
+          (task) => task.id === active.id
+        );
+
+        if (taskIndex !== -1) {
+          const [movedTask] = sourceTasks.splice(taskIndex, 1);
+          movedTask.status = targetColumn;
+          targetTasks.push(movedTask);
+
+          setBoard({
+            ...board,
+            [sourceColumn]: sourceTasks,
+            [targetColumn]: targetTasks,
+          });
+
+          dispatch(updateTask(movedTask));
+        }
+      }
+    }
+
+    setActiveTask(null);
+  };
 
   return (
-    <div className="flex lg:flex-row flex-col gap-2 justify-between">
-      {board.columns.map((column) => (
-        <TaskColumn
-          key={column.id}
-          id={column.id.toString()}
-          title={column.title}
-          tasks={column.tasks}
-        />
-      ))}
-    </div>
+    <DndContext
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+      onDragStart={(event) => {
+        const task = tasks.find((t) => t.id === event.active.id);
+        setActiveTask(task || null);
+      }}
+    >
+      <div className="flex lg:flex-row flex-col gap-2 justify-between">
+        {Object.entries(COLUMN_NAMES).map(([status, { title, id }]) => (
+          <TaskColumn
+            key={id}
+            id={status}
+            title={title}
+            tasks={board[status] || []}
+          />
+        ))}
+      </div>
+      <DragOverlay>
+        {activeTask ? (
+          <div className="bg-white p-2 rounded shadow-md">
+            {activeTask.title}
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   );
 }

@@ -12,6 +12,7 @@ export const TaskSchema = new Schema({
     default: 'Open',
     index: true,
   },
+  tags: { type: [String], index: true },
   responsible: { type: Types.ObjectId, ref: 'TeamMember' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },

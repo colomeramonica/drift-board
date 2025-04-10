@@ -1,7 +1,248 @@
-export default function NewTaskModal({ onClose }) {
-  const handleClose = () => {
-    onClose();
+import React, { useEffect, useState } from 'react';
+import { Button } from './ui/button';
+import {
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from './ui/dialog';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
+import { cn } from '../lib/utils';
+
+import { Calendar } from './ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { format } from 'date-fns';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { createTask, getMembers } from '../api';
+import { MembersProps } from '../types';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { MultiSelect } from './ui/multi-select';
+import type { RootState } from '../../store';
+import { useSelector, useDispatch } from 'react-redux';
+import { addTask } from '../store/reducers/tasksReducer';
+
+export default function NewTaskModal({ onClose }: { onClose: () => void }) {
+  const task = useSelector((state: RootState) => state.tasks.tasks);
+  const dispatch = useDispatch();
+  const [newTask, setNewTask] = useState({
+    title: '',
+    description: '',
+    responsible: '',
+    status: 'Open',
+    priority: '1',
+    dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+    tags: [],
+  });
+  const [members, setMembers] = useState<MembersProps[]>([]);
+  const [tags, setTags] = useState<string[]>(['development']);
+  const [loading, setLoading] = useState(false);
+  const [response, setResponse] = useState('');
+
+  const tagsList = [
+    { value: 'development', label: 'Development' },
+    { value: 'design', label: 'Design' },
+    { value: 'test', label: 'Test' },
+  ];
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      const response = await getMembers();
+      setMembers(response as MembersProps[]);
+    };
+    fetchMembers();
+  }, []);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    name: string
+  ) => {
+    setNewTask((prev) => ({
+      ...prev,
+      [name]: e.target.value,
+    }));
   };
 
-  return <div>Hello</div>;
+  const handleSubmit = async () => {
+    const task = { ...newTask, tags };
+    setLoading(true);
+    setResponse('');
+    try {
+      const response = await createTask(task);
+      dispatch(addTask(response));
+      setResponse(response?.message || 'Task created successfully!');
+      if (!response?.error) {
+        setTimeout(() => {
+          onClose();
+        }, 1000);
+      }
+    } catch (error) {
+      setResponse('Failed to create task. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <DialogContent className="sm:max-w-lg border-0">
+      <DialogHeader>
+        <DialogTitle className="text-primary">New task</DialogTitle>
+        <DialogDescription>
+          Create a new task and assign it to a member of your team.
+        </DialogDescription>
+        {response && (
+          <div
+            className={cn(
+              'text-sm',
+              response.includes('Failed') ? 'text-red-500' : 'text-green-500'
+            )}
+          >
+            {response}
+          </div>
+        )}
+      </DialogHeader>
+      <div className="flex flex-col gap-4 py-4">
+        <div className="md:grid md:grid-cols-4 flex flex-col items-start md:items-center gap-2">
+          <Label htmlFor="name" className="text-right text-primary">
+            Title
+          </Label>
+          <Input
+            id="title"
+            onChange={(e) => handleChange(e, 'title')}
+            className="md:col-span-3 w-auto text-foreground"
+          />
+        </div>
+        <div className="md:grid md:grid-cols-4 flex flex-col items-start md:items-center gap-2">
+          <Label htmlFor="username" className="text-right text-primary">
+            Description
+          </Label>
+          <Textarea
+            id="description"
+            value={newTask.description}
+            onChange={(e) => handleChange(e, 'description')}
+            className="md:col-span-3 w-auto "
+          />
+        </div>
+        <div className="md:grid md:grid-cols-4 flex flex-col items-start md:items-center gap-2">
+          <Label htmlFor="priority" className="text-right text-primary">
+            Priority
+          </Label>
+          <Select
+            onValueChange={(value) =>
+              setNewTask((prev) => ({ ...prev, priority: value }))
+            }
+          >
+            <SelectTrigger className="md:col-span-3 w-auto ">
+              <SelectValue placeholder="Priority" className="text-primary" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="1">Low</SelectItem>
+                <SelectItem value="2">Medium</SelectItem>
+                <SelectItem value="3">High</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="md:grid md:grid-cols-4 flex flex-col items-start md:items-center gap-2">
+          <Label htmlFor="responsible" className="text-right text-primary">
+            Responsible
+          </Label>
+          <Select
+            onValueChange={(value) =>
+              setNewTask((prev) => ({ ...prev, responsible: value }))
+            }
+          >
+            <SelectTrigger className="md:col-span-3 w-auto ">
+              <SelectValue placeholder="Responsible" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {members.map((member) => (
+                  <SelectItem key={member._id} value={member._id}>
+                    <Avatar className="mr-2">
+                      <AvatarImage src={member.avatar} alt={member.name} />
+                      <AvatarFallback className="bg-secondary text-foreground">
+                        {member.name[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    {member.name}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="md:grid md:grid-cols-4 flex flex-col items-start md:items-center gap-2">
+          <Label htmlFor="due_date" className="text-right text-primary">
+            Due date
+          </Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={'outline'}
+                className={cn(
+                  'md:col-span-3 w-auto  text-left font-normal',
+                  !newTask.dueDate && 'text-muted-foreground'
+                )}
+              >
+                {newTask.dueDate ? (
+                  format(newTask.dueDate, 'PPP')
+                ) : (
+                  <span>Pick a date</span>
+                )}
+                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={newTask.dueDate}
+                onSelect={(value) =>
+                  setNewTask((prev) => ({ ...prev, dueDate: value }))
+                }
+                className="rounded-md border shadow"
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+        <div className="md:grid md:grid-cols-4 flex flex-col items-start md:items-center gap-2">
+          <Label htmlFor="tags" className="text-right text-primary">
+            Tags
+          </Label>
+          <MultiSelect
+            className="md:col-span-3 w-auto"
+            options={tagsList}
+            onValueChange={setTags}
+            defaultValue={tags}
+            placeholder="Select tags"
+            variant="inverted"
+            maxCount={3}
+          />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button
+          type="submit"
+          className={`bg-primary ${
+            loading ? 'cursor-progress' : 'cursor-pointer'
+          }`}
+          onClick={handleSubmit}
+          disabled={loading}
+        >
+          Create
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  );
 }
